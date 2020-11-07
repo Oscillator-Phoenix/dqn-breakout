@@ -6,3 +6,5 @@ models/
 saved_models/
 rewards*.txt
 tmp_eval_frames/
+tmp_frames/
+movie/

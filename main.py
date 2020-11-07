@@ -37,7 +37,9 @@ EVALUATE_FREQ = 1_000
 
 rand = random.Random()
 rand.seed(GLOBAL_SEED)
-new_seed = lambda: rand.randint(0, 1000_000)
+def new_seed(): return rand.randint(0, 1000_000)
+
+
 if not os.path.exists(SAVE_PREFIX):
     os.mkdir(SAVE_PREFIX)
 
