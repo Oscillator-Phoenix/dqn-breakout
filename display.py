@@ -8,7 +8,7 @@ import torch
 from utils_env import MyEnv
 from utils_drl import Agent
 
-target = 2
+target = 8
 model_name = f"model_{target:03d}"
 model_path = f"./models/{model_name}"
 
@@ -30,16 +30,15 @@ def render() -> None:
         shutil.rmtree(tmp_frames_dir)
     os.mkdir(tmp_frames_dir)
 
-    if os.path.exists(movie_dir):
-        shutil.rmtree(movie_dir)
-    os.mkdir(movie_dir)
+    if not os.path.exists(movie_dir):
+        os.mkdir(movie_dir)
 
     for ind, frame in enumerate(frames):
         frame.save(os.path.join(tmp_frames_dir,
                                 f"{ind:06d}.png"), format="png")
 
     if os.system(
-        f'''ffmpeg -i "./{tmp_frames_dir}/%06d.png" -pix_fmt yuv420p -y ./{movie_dir}/movie.mp4'''
+        f'''ffmpeg -i "./{tmp_frames_dir}/%06d.png" -pix_fmt yuv420p -y ./{movie_dir}/movie-{target:03d}.mp4'''
     ) != 0:
         print("ffmpeg error")
 
