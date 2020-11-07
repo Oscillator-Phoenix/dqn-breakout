@@ -21,20 +21,30 @@ EPS_START = 1.
 EPS_END = 0.1
 EPS_DECAY = 1000000
 
+# BATCH_SIZE = 32
+# POLICY_UPDATE = 4
+# TARGET_UPDATE = 10_000
+# WARM_STEPS = 50_000
+# MAX_STEPS = 50_000_000
+# EVALUATE_FREQ = 100_000
+
 BATCH_SIZE = 32
 POLICY_UPDATE = 4
 TARGET_UPDATE = 10_000
 WARM_STEPS = 50_000
-MAX_STEPS = 50_000_000
-EVALUATE_FREQ = 100_000
+MAX_STEPS = 10_000
+EVALUATE_FREQ = 1_000
 
 rand = random.Random()
 rand.seed(GLOBAL_SEED)
 new_seed = lambda: rand.randint(0, 1000_000)
-# os.mkdir(SAVE_PREFIX)
+if not os.path.exists(SAVE_PREFIX):
+    os.mkdir(SAVE_PREFIX)
 
 torch.manual_seed(new_seed())
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
+
 env = MyEnv(device)
 agent = Agent(
     env.get_action_dim(),

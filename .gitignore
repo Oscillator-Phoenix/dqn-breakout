@@ -5,3 +5,4 @@ eval_*/
 models/
 saved_models/
 rewards*.txt
+tmp_eval_frames/
