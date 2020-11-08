@@ -46,8 +46,8 @@ class Agent(object):
 
         self.__optimizer = optim.Adam(
             self.__policy.parameters(),
-            lr=0.0000625,
-            eps=1.5e-4,
+            lr=0.001,
+            eps=1e-8,
         )
 
         self.__target.eval()
