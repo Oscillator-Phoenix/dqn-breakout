@@ -18,19 +18,19 @@ SAVE_PREFIX = "./models"
 STACK_SIZE = 4
 
 
-# BATCH_SIZE = 32
-# POLICY_UPDATE = 4
-# TARGET_UPDATE = 10_000
-# WARM_STEPS = 50_000
-# MAX_STEPS = 50_000_000
-# EVALUATE_FREQ = 100_000
-
 BATCH_SIZE = 32
 POLICY_UPDATE = 4
 TARGET_UPDATE = 10_000
 WARM_STEPS = 50_000
-MAX_STEPS = 10_000
-EVALUATE_FREQ = 1_000
+MAX_STEPS = 50_000_000
+EVALUATE_FREQ = 100_000
+
+# BATCH_SIZE = 32
+# POLICY_UPDATE = 4
+# TARGET_UPDATE = 10_000
+# WARM_STEPS = 50_000
+# MAX_STEPS = 10_000
+# EVALUATE_FREQ = 1_000
 
 
 # 初始化随机数
@@ -80,9 +80,9 @@ def epsilon_greedy_with_decayed() -> None:
     '''
 
     # 初始化 epsilon 参数
-    eps_step: float = (EPS_START - EPS_END) / EPS_DECAY
-    eps: float = EPS_START
-    random_x = random.Random()
+    epsilon: float = EPS_START  # explorate rate
+    epsilon_step: float = (EPS_START - EPS_END) / EPS_DECAY
+    random_x = random.Random()  # x to test explorate rate
     random_x.seed(new_seed())
 
     # 初始化训练数据
@@ -106,11 +106,11 @@ def epsilon_greedy_with_decayed() -> None:
 
         # 根据 epsilon-greedy with epsilon decayed 方法产生训练数据
         action: int
-        if random_x.random() > eps:
-            action = agent.run(state)
+        if random_x.random() > epsilon:
+            action = agent.run(state)  # exploit
         else:
-            action = agent.random_action()
-        eps = max(eps - eps_step, EPS_END)  # epsilon update
+            action = agent.random_action()  # explore
+        epsilon = max(epsilon - epsilon_step, EPS_END)  # epsilon update
 
         # 从环境中产生数据
         obs, reward, done = env.step(action)
