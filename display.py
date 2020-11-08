@@ -20,7 +20,12 @@ def render() -> None:
 
     device = torch.device("cpu")
     env = MyEnv(device)
-    agent = Agent(env.get_action_dim(), device, 0.99, 0, 0, 0, 1, model_path)
+    agent = Agent(
+        action_dim=env.get_action_dim(),
+        device=device,
+        gamma=0.99,
+        seed=0,
+        restore=model_path)
 
     obs_queue = deque(maxlen=5)
     avg_reward, frames = env.evaluate(obs_queue, agent, render=True)
@@ -44,5 +49,6 @@ def render() -> None:
 
 
 if __name__ == '__main__':
+    print("render begin...")
     render()
     print("render done")

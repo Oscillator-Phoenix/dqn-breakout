@@ -25,22 +25,12 @@ class Agent(object):
             device: TorchDevice,
             gamma: float,
             seed: int,
-
-            eps_start: float,
-            eps_final: float,
-            eps_decay: float,
-
             restore: Optional[str] = None,
     ) -> None:
         self.__action_dim = action_dim
         self.__device = device
         self.__gamma = gamma
 
-        self.__eps_start = eps_start
-        self.__eps_final = eps_final
-        self.__eps_decay = eps_decay
-
-        self.__eps = eps_start
         self.__r = random.Random()
         self.__r.seed(seed)
 
@@ -62,19 +52,15 @@ class Agent(object):
 
         self.__target.eval()
 
-    def run(self, state: TensorStack4, training: bool = False) -> int:
+    def run(self, state: TensorStack4) -> int:
         """run suggests an action for the given state."""
+        with torch.no_grad():
+            return self.__policy(state).max(1).indices.item()
 
-        # epsilon-greedy sampling
-        if training:
-            self.__eps -= (self.__eps_start -
-                           self.__eps_final) / self.__eps_decay
-            self.__eps = max(self.__eps, self.__eps_final)
-
-        if self.__r.random() > self.__eps:
-            with torch.no_grad():
-                return self.__policy(state).max(1).indices.item()
-
+    def random_action(self) -> int:
+        '''
+        return a random action
+        '''
         return self.__r.randint(0, self.__action_dim - 1)
 
     def learn(self, memory: ReplayMemory, batch_size: int) -> float:
