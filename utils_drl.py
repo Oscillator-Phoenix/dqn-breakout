@@ -46,16 +46,20 @@ class Agent(object):
 
         self.__policy = DQN(action_dim, device).to(device)
         self.__target = DQN(action_dim, device).to(device)
+
         if restore is None:
             self.__policy.apply(DQN.init_weights)
         else:
             self.__policy.load_state_dict(torch.load(restore))
+
         self.__target.load_state_dict(self.__policy.state_dict())
+
         self.__optimizer = optim.Adam(
             self.__policy.parameters(),
             lr=0.0000625,
             eps=1.5e-4,
         )
+
         self.__target.eval()
 
     def run(self, state: TensorStack4, training: bool = False) -> int:
