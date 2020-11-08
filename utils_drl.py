@@ -60,25 +60,31 @@ class Agent(object):
 
     def run(self, state: TensorStack4, training: bool = False) -> int:
         """run suggests an action for the given state."""
+
         if training:
-            self.__eps -= \
-                (self.__eps_start - self.__eps_final) / self.__eps_decay
+            self.__eps -= (self.__eps_start -
+                           self.__eps_final) / self.__eps_decay
             self.__eps = max(self.__eps, self.__eps_final)
 
         if self.__r.random() > self.__eps:
             with torch.no_grad():
                 return self.__policy(state).max(1).indices.item()
+
         return self.__r.randint(0, self.__action_dim - 1)
 
     def learn(self, memory: ReplayMemory, batch_size: int) -> float:
         """learn trains the value network via TD-learning."""
-        state_batch, action_batch, reward_batch, next_batch, done_batch = \
-            memory.sample(batch_size)
+
+        # sampling
+        state_batch, action_batch, reward_batch, next_batch, done_batch = memory.sample(
+            batch_size)
 
         values = self.__policy(state_batch.float()).gather(1, action_batch)
+
         values_next = self.__target(next_batch.float()).max(1).values.detach()
         expected = (self.__gamma * values_next.unsqueeze(1)) * \
             (1. - done_batch) + reward_batch
+
         loss = F.smooth_l1_loss(values, expected)
 
         self.__optimizer.zero_grad()

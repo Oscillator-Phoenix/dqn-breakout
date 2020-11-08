@@ -79,7 +79,7 @@ for step in progressive:
     memory.push(env.make_folded_state(obs_queue), action, reward, done)
 
     if step % POLICY_UPDATE == 0 and training:
-        agent.learn(memory, BATCH_SIZE)
+        agent.learn(memory, BATCH_SIZE)  # TODO priority
 
     if step % TARGET_UPDATE == 0:
         agent.sync()
