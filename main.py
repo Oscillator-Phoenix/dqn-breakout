@@ -44,8 +44,14 @@ if not os.path.exists(SAVE_PREFIX):
     os.mkdir(SAVE_PREFIX)
 
 torch.manual_seed(new_seed())
+
+
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
+print(f"available cpu threads: {torch.get_num_threads()}")
+torch.set_num_threads(1)
+print(f"use cpu threads: {torch.get_num_threads()}")
+
 
 env = MyEnv(device)
 agent = Agent(
