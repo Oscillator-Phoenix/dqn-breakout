@@ -65,6 +65,7 @@ class Agent(object):
     def run(self, state: TensorStack4, training: bool = False) -> int:
         """run suggests an action for the given state."""
 
+        # epsilon-greedy sampling
         if training:
             self.__eps -= (self.__eps_start -
                            self.__eps_final) / self.__eps_decay
