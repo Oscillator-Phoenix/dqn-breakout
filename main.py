@@ -16,7 +16,6 @@ GLOBAL_SEED = 0
 
 RENDER = False
 
-SAVE_PREFIX = "./models"
 
 STACK_SIZE = 4
 MEM_SIZE = 100_000
@@ -50,8 +49,12 @@ torch.manual_seed(new_seed())
 
 
 # 设置模型持久化的路径
+SAVE_PREFIX = "./models"
+target = 2
 if not os.path.exists(SAVE_PREFIX):
     os.mkdir(SAVE_PREFIX)
+model_name: str = f"model_{target:03d}"
+model_path: str = os.path.join(SAVE_PREFIX, model_name)
 
 
 # 设置训练设备
@@ -69,7 +72,7 @@ agent = Agent(
     device=device,
     gamma=GAMMA,
     seed=new_seed(),
-    restore=None
+    restore=model_path
 )
 
 
@@ -111,12 +114,11 @@ def epsilon_greedy_with_decayed() -> None:
         # 从 Env 获取一个 state
         state = env.make_state(obs_queue).to(device).float()
         # 根据 epsilon-greedy with epsilon decayed 方法产生训练数据
-        action: int
-        if random_x.random() > epsilon:
-            action = agent.run(state)  # exploit
-        else:
-            action = agent.random_action()  # explore
-        epsilon = max(epsilon - epsilon_step, EPS_END)  # epsilon update
+        action = agent.run_boltzmann(state)
+
+        # action = agent.run_greedy(state, epsilon=epsilon)
+        # epsilon = max(epsilon - epsilon_step, EPS_END)  # epsilon update
+
         obs, reward, done = env.step(action)
         obs_queue.append(obs)
         # 添加 数据 到 Replay 数据库
@@ -146,5 +148,66 @@ def epsilon_greedy_with_decayed() -> None:
             done = True
 
 
+def boltzmann_exploration() -> None:
+
+    _lambda: float = 1.0
+
+    # 初始化训练数据
+    memory = ReplayMemory(
+        channels=STACK_SIZE + 1,
+        capacity=MEM_SIZE,
+        device=device)
+    obs_queue: deque = deque(maxlen=5)
+    done = True
+
+    # TODO warm up
+
+    # 迭代
+    for step in tqdm(range(MAX_STEPS), total=MAX_STEPS, ncols=50, leave=False, unit="b"):
+
+        # if done, 重置 Env
+        if done:
+            observations, _, _ = env.reset()
+            for obs in observations:
+                obs_queue.append(obs)
+
+        # agent 与 env 交互产生训练数据
+        # 从 Env 获取一个 state
+        state = env.make_state(obs_queue).to(device).float()
+        action = agent.run_boltzmann(state, _lambda=_lambda)
+        obs, reward, done = env.step(action)
+        obs_queue.append(obs)
+
+        # 添加 数据 到 Replay 数据库
+        memory.push(env.make_folded_state(obs_queue), action, reward, done)
+
+        # 从训练数据库中抽取数据进行训练
+        if step % POLICY_UPDATE == 0:
+            agent.learn(memory, BATCH_SIZE)  # TODO priority
+
+        # 权重同步
+        if step % TARGET_UPDATE == 0:
+            agent.sync()
+
+        if step % EVALUATE_FREQ == 0:
+            avg_reward, frames = env.evaluate(obs_queue, agent, render=RENDER)
+            with open("rewards.txt", "a") as fp:
+                fp.write(
+                    f"{step//EVALUATE_FREQ:3d} {step:8d} {avg_reward:.1f}\n")
+            if RENDER:
+                prefix = f"eval_{step//EVALUATE_FREQ:03d}"
+                os.mkdir(prefix)
+                for ind, frame in enumerate(frames):
+                    with open(os.path.join(prefix, f"{ind:06d}.png"), "wb") as fp:
+                        frame.save(fp, format="png")
+            agent.save(os.path.join(
+                SAVE_PREFIX, f"model_{step//EVALUATE_FREQ:03d}"))
+            done = True
+
+
 if __name__ == '__main__':
-    epsilon_greedy_with_decayed()
+    # print("epsilon_greedy_with_decayed")
+    # epsilon_greedy_with_decayed()
+
+    print("boltzmann_exploration")
+    boltzmann_exploration()

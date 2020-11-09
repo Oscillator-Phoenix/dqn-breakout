@@ -3,7 +3,7 @@ from typing import (
 )
 
 import random
-
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -57,11 +57,33 @@ class Agent(object):
         with torch.no_grad():
             return self.__policy(state).max(1).indices.item()
 
-    def random_action(self) -> int:
+    def run_random(self) -> int:
         '''
         return a random action
         '''
         return self.__r.randint(0, self.__action_dim - 1)
+
+    def run_greedy(self, state: TensorStack4, epsilon: float = 1.0) -> int:
+        '''
+        returna a action with epsilon-greedy algorithm
+        epsilon is explorate rate
+        '''
+        if self.__r.random() > epsilon:
+            return self.run(state)
+        else:
+            return self.run_random()
+
+    def run_boltzmann(self, state: TensorStack4, _lambda: float = 1.0) -> int:
+        '''
+        returna a action with boltzmann-exploration algorithm
+        _lambda is explorate rate
+        '''
+        with torch.no_grad():
+            probs = (
+                F.softmax(self.__policy(state) * _lambda,
+                          dim=-1).cpu().numpy().ravel()
+            )
+        return int(np.random.choice(list(range(self.__action_dim)), p=probs))
 
     def learn(self, memory: ReplayMemory, batch_size: int) -> float:
         """learn trains the value network via TD-learning."""
