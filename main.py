@@ -196,7 +196,7 @@ def boltzmann_exploration() -> None:
     # warm up
     print("warm up...")
     for step in tqdm(range(warm_up_step), total=warm_up_step, ncols=50, leave=False, unit="sample"):
-        # sample(done=done)
+        sample(done=done)
         pass
 
     # 迭代
