@@ -8,17 +8,11 @@ class DQN(nn.Module):
     def __init__(self, action_dim, device):
         super(DQN, self).__init__()
 
-        # self.__conv1 = nn.Conv2d(4, 32, kernel_size=8, stride=4, bias=False)
-        # self.__conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2, bias=False)
-        # self.__conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1, bias=False)
-        # self.__fc1 = nn.Linear(64*7*7, 512)
-        # self.__fc2 = nn.Linear(512, action_dim)
-
-        self.__conv1 = nn.Conv2d(4, 8, kernel_size=8, stride=4, bias=False)
-        self.__conv2 = nn.Conv2d(8, 16, kernel_size=4, stride=2, bias=False)
-        self.__conv3 = nn.Conv2d(16, 16, kernel_size=2, stride=1, bias=False)
-        self.__fc1 = nn.Linear(16*8*8, 64)
-        self.__fc2 = nn.Linear(64, action_dim)
+        self.__conv1 = nn.Conv2d(4, 32, kernel_size=8, stride=4, bias=False)
+        self.__conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2, bias=False)
+        self.__conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1, bias=False)
+        self.__fc1 = nn.Linear(64*7*7, 512)
+        self.__fc2 = nn.Linear(512, action_dim)
 
         self.__device = device
 
