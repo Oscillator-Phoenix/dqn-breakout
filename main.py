@@ -1,6 +1,8 @@
 from collections import deque
 import os
 import random
+import argparse
+
 from tqdm import tqdm
 
 import torch
@@ -48,21 +50,25 @@ def new_seed():
 torch.manual_seed(new_seed())
 
 
-# 设置模型持久化的路径
-SAVE_PREFIX = "./models"
-target = 2
-if not os.path.exists(SAVE_PREFIX):
-    os.mkdir(SAVE_PREFIX)
-model_name: str = f"model_{target:03d}"
-model_path: str = os.path.join(SAVE_PREFIX, model_name)
-
-
 # 设置训练设备
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
 print(f"available cpu threads: {torch.get_num_threads()}")
 torch.set_num_threads(2)
 print(f"use cpu threads: {torch.get_num_threads()}")
+
+
+# 设置模型持久化的路径
+SAVE_PREFIX = "./models"
+parser = argparse.ArgumentParser(description='load target model')
+parser.add_argument('-target', action="store", default=0, type=int)
+args = parser.parse_args()
+target: int = args.target
+if not os.path.exists(SAVE_PREFIX):
+    os.mkdir(SAVE_PREFIX)
+model_name: str = f"model_{target:03d}"
+model_path: str = os.path.join(SAVE_PREFIX, model_name)
+print(f"load target model: {model_path}")
 
 
 # Env, Agent

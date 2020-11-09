@@ -59,7 +59,7 @@ def render(target: int = 0) -> None:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Short sample app')
+    parser = argparse.ArgumentParser(description='display target model')
     parser.add_argument('-target', action="store", default=0, type=int)
     args = parser.parse_args()
 
