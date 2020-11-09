@@ -156,21 +156,28 @@ def epsilon_greedy_with_decayed() -> None:
 
 def boltzmann_exploration() -> None:
 
+    # boltzmann_exploration 参数
     _lambda: float = 1.0
+
+    # 训练参数
+    warm_up_step: int = 1_000
+    train_step: int = 5_000_000
+    sample_times_per_step: int = 8
+    train_times_per_step: int = 2
+    steps_for_target_update: int = 1_000
+    steps_for_evaluate: int = 5_000
+    memory_size: int = 50_000
 
     # 初始化训练数据
     memory = ReplayMemory(
         channels=STACK_SIZE + 1,
-        capacity=MEM_SIZE,
+        capacity=memory_size,
         device=device)
     obs_queue: deque = deque(maxlen=5)
-    done = True
+    done: bool = True
 
-    # TODO warm up
-
-    # 迭代
-    for step in tqdm(range(MAX_STEPS), total=MAX_STEPS, ncols=50, leave=False, unit="b"):
-
+    # 采样函数
+    def sample(done: bool):
         # if done, 重置 Env
         if done:
             observations, _, _ = env.reset()
@@ -183,31 +190,49 @@ def boltzmann_exploration() -> None:
         action = agent.run_boltzmann(state, _lambda=_lambda)
         obs, reward, done = env.step(action)
         obs_queue.append(obs)
-
         # 添加 数据 到 Replay 数据库
         memory.push(env.make_folded_state(obs_queue), action, reward, done)
 
-        # 从训练数据库中抽取数据进行训练
-        if step % POLICY_UPDATE == 0:
+    # warm up
+    print("warm up...")
+    for step in tqdm(range(warm_up_step), total=warm_up_step, ncols=50, leave=False, unit="sample"):
+        # sample(done=done)
+        pass
+
+    # 迭代
+    print("tarin...")
+    for step in tqdm(range(train_step), total=train_step, ncols=50, leave=False, unit="step"):
+
+        # 采样
+        for _ in range(sample_times_per_step):
+            sample(done=done)
+
+        # 训练
+        for _ in range(train_times_per_step):
+            # 从训练数据库中抽取数据进行训练
             agent.learn(memory, BATCH_SIZE)  # TODO priority
 
         # 权重同步
-        if step % TARGET_UPDATE == 0:
+        if step % steps_for_target_update == 0:
             agent.sync()
 
-        if step % EVALUATE_FREQ == 0:
+        # 模型持久化
+        if step % steps_for_evaluate == 0:
             avg_reward, frames = env.evaluate(obs_queue, agent, render=RENDER)
             with open("rewards.txt", "a") as fp:
                 fp.write(
-                    f"{step//EVALUATE_FREQ:3d} {step:8d} {avg_reward:.1f}\n")
+                    f"{step//steps_for_evaluate:3d} {step:8d} {avg_reward:.1f}\n")
+
             if RENDER:
-                prefix = f"eval_{step//EVALUATE_FREQ:03d}"
+                prefix = f"eval_{step//steps_for_evaluate:03d}"
                 os.mkdir(prefix)
                 for ind, frame in enumerate(frames):
                     with open(os.path.join(prefix, f"{ind:06d}.png"), "wb") as fp:
                         frame.save(fp, format="png")
+
             agent.save(os.path.join(
-                SAVE_PREFIX, f"model_{step//EVALUATE_FREQ:03d}"))
+                SAVE_PREFIX, f"model_{step//steps_for_evaluate:03d}"))
+
             done = True
 
 
