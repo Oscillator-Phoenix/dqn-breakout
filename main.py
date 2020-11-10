@@ -87,7 +87,7 @@ def epsilon_greedy_with_decayed() -> None:
     epsilon-greedy with epsilon decayed
     '''
 
-    EPS_START: float = 1.0
+    EPS_START: float = 0.15
     EPS_END: float = 0.1
     EPS_DECAY: float = 1000000
 
@@ -105,8 +105,6 @@ def epsilon_greedy_with_decayed() -> None:
     obs_queue: deque = deque(maxlen=5)
     done = True
 
-    # TODO warm up
-
     # 迭代
     for step in tqdm(range(MAX_STEPS), total=MAX_STEPS, ncols=50, leave=False, unit="b"):
 
@@ -120,10 +118,8 @@ def epsilon_greedy_with_decayed() -> None:
         # 从 Env 获取一个 state
         state = env.make_state(obs_queue).to(device).float()
         # 根据 epsilon-greedy with epsilon decayed 方法产生训练数据
-        action = agent.run_boltzmann(state)
-
-        # action = agent.run_greedy(state, epsilon=epsilon)
-        # epsilon = max(epsilon - epsilon_step, EPS_END)  # epsilon update
+        action = agent.run_greedy(state, epsilon=epsilon)
+        epsilon = max(epsilon - epsilon_step, EPS_END)  # epsilon update
 
         obs, reward, done = env.step(action)
         obs_queue.append(obs)
@@ -237,8 +233,8 @@ def boltzmann_exploration() -> None:
 
 
 if __name__ == '__main__':
-    # print("epsilon_greedy_with_decayed")
-    # epsilon_greedy_with_decayed()
+    print("epsilon_greedy_with_decayed")
+    epsilon_greedy_with_decayed()
 
-    print("boltzmann_exploration")
-    boltzmann_exploration()
+    # print("boltzmann_exploration")
+    # boltzmann_exploration()
