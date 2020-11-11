@@ -19,5 +19,7 @@
     "python.pythonPath": "G:\\Program Files (x86)\\Python37\\python.exe",
     "python.linting.pylintArgs": [
         "--generated-members=numpy.* ,torch.*"
-    ]
+    ],
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }
