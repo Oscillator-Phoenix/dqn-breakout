@@ -237,7 +237,7 @@ def boltzmann_exploration() -> None:
             done = True
 
 
-def priorited_experience_replay() -> None:
+def prioritized_experience_replay() -> None:
 
     EPS_START: float = 0.15
     EPS_END: float = 0.1
@@ -327,5 +327,5 @@ if __name__ == '__main__':
     # print("boltzmann_exploration")
     # boltzmann_exploration()
 
-    print("priorited_experience_replay")
-    priorited_experience_replay()
+    print("prioritized_experience_replay")
+    prioritized_experience_replay()
