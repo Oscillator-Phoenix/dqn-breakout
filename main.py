@@ -354,7 +354,7 @@ def prioritized_experience_replay_dueling() -> None:
         device=device,
         gamma=GAMMA,
         seed=new_seed(),
-        restore=None,
+        restore=model_path,
         q_func="DuelingDQN"
     )
 
@@ -441,16 +441,16 @@ def prioritized_experience_replay_dueling() -> None:
 
 if __name__ == '__main__':
 
-    if args_dueling and args_prioritized:
-        print("prioritized_experience_replay_dueling")
+    if args_dueling:
+        print("[ prioritized_experience_replay_dueling ]")
         prioritized_experience_replay_dueling()
 
     elif (not args_dueling) and args_prioritized:
-        print("prioritized_experience_replay")
+        print("[ prioritized_experience_replay ]")
         prioritized_experience_replay()
 
     else:
-        print("epsilon_greedy_with_decayed")
+        print("[ epsilon_greedy_with_decayed ]")
         epsilon_greedy_with_decayed()
 
     # aborted
