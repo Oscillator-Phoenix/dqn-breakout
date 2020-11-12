@@ -25,7 +25,8 @@ RENDER = False
 
 
 STACK_SIZE = 4
-MEM_SIZE = 100_000
+# MEM_SIZE = 100_000
+MEM_SIZE = 80_000
 
 
 BATCH_SIZE = 32
@@ -33,7 +34,7 @@ POLICY_UPDATE = 4
 TARGET_UPDATE = 10_000
 WARM_STEPS = 50_000
 MAX_STEPS = 50_000_000
-EVALUATE_FREQ = 100_000
+EVALUATE_FREQ = 50_000
 
 # BATCH_SIZE = 32
 # POLICY_UPDATE = 4
@@ -239,8 +240,8 @@ def boltzmann_exploration() -> None:
 
 def prioritized_experience_replay() -> None:
 
-    EPS_START: float = 0.15
-    EPS_END: float = 0.1
+    EPS_START: float = 0.01
+    EPS_END: float = 0.0
     EPS_DECAY: float = 1000000
 
     # 初始化 epsilon 参数
