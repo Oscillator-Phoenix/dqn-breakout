@@ -9,4 +9,4 @@ tmp_eval_frames/
 tmp_frames/
 movie/
 dueling_dqn_models/
-dueling_dqn_movies/
+dueling_dqn_movie/
