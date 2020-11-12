@@ -68,16 +68,18 @@ print(f"use cpu threads: {torch.get_num_threads()}")
 parser = argparse.ArgumentParser(description='load target model')
 parser.add_argument('-target', action="store", default=0, type=int)
 parser.add_argument('-dueling', action="store", default=False, type=bool)
+parser.add_argument('-prioritized', action="store", default=False, type=bool)
 
 args = parser.parse_args()
-target: int = args.target
-dueling: bool = args.dueling
+args_target: int = args.target
+args_dueling: bool = args.dueling
+args_prioritized: bool = args.prioritized
 
-SAVE_PREFIX = "./dueling_models" if dueling else "./models"
+SAVE_PREFIX = "./dueling_dqn__models" if args_dueling else "./models"
 
 if not os.path.exists(SAVE_PREFIX):
     os.mkdir(SAVE_PREFIX)
-model_name: str = f"model_{target:03d}"
+model_name: str = f"model_{args_target:03d}"
 model_path: str = os.path.join(SAVE_PREFIX, model_name)
 print(f"load target model: {model_path}")
 
@@ -438,14 +440,19 @@ def prioritized_experience_replay_dueling() -> None:
 
 
 if __name__ == '__main__':
-    # print("epsilon_greedy_with_decayed")
-    # epsilon_greedy_with_decayed()
 
+    if args_dueling and args_prioritized:
+        print("prioritized_experience_replay_dueling")
+        prioritized_experience_replay_dueling()
+
+    elif (not args_dueling) and args_prioritized:
+        print("prioritized_experience_replay")
+        prioritized_experience_replay()
+
+    else:
+        print("epsilon_greedy_with_decayed")
+        epsilon_greedy_with_decayed()
+
+    # aborted
     # print("boltzmann_exploration")
     # boltzmann_exploration()
-
-    # print("prioritized_experience_replay")
-    # prioritized_experience_replay()
-
-    print("prioritized_experience_replay_dueling")
-    prioritized_experience_replay_dueling()
