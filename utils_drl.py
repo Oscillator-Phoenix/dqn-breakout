@@ -17,7 +17,7 @@ from utils_types import (
 )
 
 from utils_memory import ReplayMemory
-from utils_model import DQN
+from utils_model import DQN, DuelingDQN
 
 
 class Agent(object):
@@ -29,6 +29,7 @@ class Agent(object):
             gamma: float,
             seed: int,
             restore: Optional[str] = None,
+            q_func: Optional[str] = None
     ) -> None:
         self.__action_dim = action_dim
         self.__device = device
@@ -37,8 +38,14 @@ class Agent(object):
         self.__r = random.Random()
         self.__r.seed(seed)
 
-        self.__policy = DQN(action_dim, device).to(device)
-        self.__target = DQN(action_dim, device).to(device)
+        if q_func is None:
+            self.__policy = DQN(action_dim, device).to(device)
+            self.__target = DQN(action_dim, device).to(device)
+        elif q_func == "DuelingDQN":
+            self.__policy = DuelingDQN(action_dim, device).to(device)
+            self.__target = DuelingDQN(action_dim, device).to(device)
+        else:
+            raise NotImplementedError
 
         if restore is None:
             self.__policy.apply(DQN.init_weights)
@@ -162,6 +169,7 @@ class Agent(object):
         # print("\n expected shape", expected.size())
         # print("value", values)
         # print("expected", expected)
+        # print("\n q(s, _ ) shape", self.__policy(state_batch.float()).size())
 
         # y, t
         y = values.reshape(-1, 1)   # y

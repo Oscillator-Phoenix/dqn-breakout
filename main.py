@@ -65,11 +65,16 @@ print(f"use cpu threads: {torch.get_num_threads()}")
 
 
 # 设置模型持久化的路径
-SAVE_PREFIX = "./models"
 parser = argparse.ArgumentParser(description='load target model')
 parser.add_argument('-target', action="store", default=0, type=int)
+parser.add_argument('-dueling', action="store", default=False, type=bool)
+
 args = parser.parse_args()
 target: int = args.target
+dueling: bool = args.dueling
+
+SAVE_PREFIX = "./dueling_models" if dueling else "./models"
+
 if not os.path.exists(SAVE_PREFIX):
     os.mkdir(SAVE_PREFIX)
 model_name: str = f"model_{target:03d}"
@@ -77,21 +82,20 @@ model_path: str = os.path.join(SAVE_PREFIX, model_name)
 print(f"load target model: {model_path}")
 
 
-# Env, Agent
-env = MyEnv(device)
-agent = Agent(
-    action_dim=env.get_action_dim(),
-    device=device,
-    gamma=GAMMA,
-    seed=new_seed(),
-    restore=model_path
-)
-
-
 def epsilon_greedy_with_decayed() -> None:
     '''
     epsilon-greedy with epsilon decayed
     '''
+
+    # Env, Agent
+    env = MyEnv(device)
+    agent = Agent(
+        action_dim=env.get_action_dim(),
+        device=device,
+        gamma=GAMMA,
+        seed=new_seed(),
+        restore=model_path
+    )
 
     EPS_START: float = 0.15
     EPS_END: float = 0.1
@@ -157,6 +161,16 @@ def epsilon_greedy_with_decayed() -> None:
 
 
 def boltzmann_exploration() -> None:
+    # Env, Agent
+
+    env = MyEnv(device)
+    agent = Agent(
+        action_dim=env.get_action_dim(),
+        device=device,
+        gamma=GAMMA,
+        seed=new_seed(),
+        restore=model_path
+    )
 
     # boltzmann_exploration 参数
     _lambda: float = 1.0
@@ -239,6 +253,108 @@ def boltzmann_exploration() -> None:
 
 
 def prioritized_experience_replay() -> None:
+
+    env = MyEnv(device)
+    agent = Agent(
+        action_dim=env.get_action_dim(),
+        device=device,
+        gamma=GAMMA,
+        seed=new_seed(),
+        restore=model_path
+    )
+
+    EPS_START: float = 0.01
+    EPS_END: float = 0.0
+    EPS_DECAY: float = 1000000
+
+    # 初始化 epsilon 参数
+    epsilon: float = EPS_START  # explorate rate
+    epsilon_step: float = (EPS_START - EPS_END) / EPS_DECAY
+    random_x = random.Random()  # x to test explorate rate
+    random_x.seed(new_seed())
+
+    # 初始化训练数据
+    p_memory = replay_buffers.PrioritizedReplayBuffer(MEM_SIZE)
+    obs_queue: deque = deque(maxlen=5)
+    done = True
+
+    print("warm up...")
+    # warm_up_step should be more than sample batch_size
+    warm_up_step: int = 10 * BATCH_SIZE
+
+    # 迭代
+    for step in tqdm(range(MAX_STEPS), total=MAX_STEPS, ncols=50, leave=False, unit="b"):
+
+        # if done, 重置 Env
+        if done:
+            observations, _, _ = env.reset()
+            for obs in observations:
+                obs_queue.append(obs)
+
+        # 从 Env 获取一个 state
+        state = env.make_state(obs_queue).to(device).float()
+
+        # agent 对 state 做出 action
+        action = agent.run_greedy(state, epsilon=epsilon)
+        epsilon = max(epsilon - epsilon_step, EPS_END)  # epsilon update
+
+        # Env 对 action 给出反馈
+        obs, reward, done = env.step(action)
+        obs_queue.append(obs)
+
+        # 生成训练数据，添加数据到 Replay 数据库
+        folded_state: TensorStack5 = env.make_folded_state(obs_queue)
+        experience = {
+            "state": folded_state[0][:4].unsqueeze(0),
+            "action": action,
+            "reward": reward,
+            "next_state": folded_state[0][1:].unsqueeze(0),
+            "next_action": None,
+            "is_state_terminal": done,
+        }
+        p_memory.append(**experience)
+
+        # warm up
+        if step < warm_up_step:
+            continue
+
+        # TODO self.replay_updater.update_if_necessary(self.t)
+
+        # 从训练数据库中抽取数据进行训练
+        if step % POLICY_UPDATE == 0:
+            agent.learn_prioritized(p_memory, BATCH_SIZE)  # TODO priority
+
+        # 权重同步
+        if step % TARGET_UPDATE == 0:
+            agent.sync()
+
+        if step % EVALUATE_FREQ == 0:
+            avg_reward, frames = env.evaluate(obs_queue, agent, render=RENDER)
+            with open("rewards.txt", "a") as fp:
+                fp.write(
+                    f"{step//EVALUATE_FREQ:3d} {step:8d} {avg_reward:.1f}\n")
+            if RENDER:
+                prefix = f"eval_{step//EVALUATE_FREQ:03d}"
+                os.mkdir(prefix)
+                for ind, frame in enumerate(frames):
+                    with open(os.path.join(prefix, f"{ind:06d}.png"), "wb") as fp:
+                        frame.save(fp, format="png")
+            agent.save(os.path.join(
+                SAVE_PREFIX, f"model_{step//EVALUATE_FREQ:03d}"))
+            done = True
+
+
+def prioritized_experience_replay_dueling() -> None:
+    # Env, Agent
+    env = MyEnv(device)
+    agent = Agent(
+        action_dim=env.get_action_dim(),
+        device=device,
+        gamma=GAMMA,
+        seed=new_seed(),
+        restore=None,
+        q_func="DuelingDQN"
+    )
 
     EPS_START: float = 0.01
     EPS_END: float = 0.0
@@ -328,5 +444,8 @@ if __name__ == '__main__':
     # print("boltzmann_exploration")
     # boltzmann_exploration()
 
-    print("prioritized_experience_replay")
-    prioritized_experience_replay()
+    # print("prioritized_experience_replay")
+    # prioritized_experience_replay()
+
+    print("prioritized_experience_replay_dueling")
+    prioritized_experience_replay_dueling()
