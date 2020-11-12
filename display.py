@@ -19,7 +19,7 @@ args = parser.parse_args()
 args_target: int = args.target
 args_dueling: bool = args.dueling
 
-SAVE_PREFIX = "./dueling_dqn__models" if args_dueling else "./models"
+SAVE_PREFIX = "./dueling_dqn_models" if args_dueling else "./models"
 
 if not os.path.exists(SAVE_PREFIX):
     os.mkdir(SAVE_PREFIX)

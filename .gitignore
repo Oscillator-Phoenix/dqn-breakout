@@ -8,4 +8,5 @@ rewards*.txt
 tmp_eval_frames/
 tmp_frames/
 movie/
-dueling_dqn__models/
+dueling_dqn_models/
+dueling_dqn_movies/
