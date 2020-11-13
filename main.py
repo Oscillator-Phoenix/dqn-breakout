@@ -358,7 +358,7 @@ def prioritized_experience_replay_dueling() -> None:
         q_func="DuelingDQN"
     )
 
-    EPS_START: float = 0.01
+    EPS_START: float = 1.0
     EPS_END: float = 0.0
     EPS_DECAY: float = 1000000
 
